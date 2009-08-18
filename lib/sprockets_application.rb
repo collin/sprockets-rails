@@ -1,13 +1,11 @@
 module SprocketsApplication
-  mattr_accessor :use_page_caching
-  self.use_page_caching = true
-  
   class << self
     def routes(map)
-      map.resource(:sprockets)
+      map.resources(:sprockets)
     end
     
-    def source
+    def source(namespace = nil)
+      @namespace = namespace
       concatenation.to_s
     end
     
@@ -25,7 +23,15 @@ module SprocketsApplication
       end
     
       def configuration
-        YAML.load(IO.read(File.join(RAILS_ROOT, "config", "sprockets.yml"))) || {}
+        @config = YAML.load(IO.read(File.join(RAILS_ROOT, "config", "sprockets.yml"))) || {}
+        
+        if @namespace
+          @config[:source_files] = @config[:source_files][@namespace.to_sym]
+        else
+          @config[:source_files] = @config[:source_files][:default]
+        end
+        
+        @config
       end
 
       def concatenation
@@ -34,10 +40,12 @@ module SprocketsApplication
       end
 
       def asset_path
+        return File.join(Rails.public_path, "sprockets/#{@namespace}.js") if @namespace
         File.join(Rails.public_path, "sprockets.js")
       end
 
       def source_is_unchanged?
+        return false
         previous_source_last_modified, @source_last_modified = 
           @source_last_modified, secretary.source_last_modified
           

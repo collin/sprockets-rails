@@ -1,7 +1,11 @@
 class SprocketsController < ActionController::Base
-  caches_page :show, :if => Proc.new { SprocketsApplication.use_page_caching }
+  caches_page :show, :index
   
-  def show
+  def index
     render :text => SprocketsApplication.source, :content_type => "text/javascript"
+  end
+  
+  def show id
+    render :text => SprocketsApplication.source(id), :content_type => "text/javascript"
   end
 end
